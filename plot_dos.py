@@ -7,7 +7,22 @@ from os.path import exists
 def plot_dos(doscar,poscar,**args):
     dos, energies, ef = parse_doscar(doscar)
     atomtypes, atomnums = parse_poscar(poscar)[2:4]
-        
+    
+    if 'irange' in args and len(args['irange'])>0:
+        integrate_dos=True
+        irange=args['irange']
+        erange=[]
+        for i in range(len(energies)):
+            if energies[i]>min(irange) and energies[i]<max(irange):
+                erange.append(energies[i])
+            elif energies[i]<min(irange):
+                emin=i
+            elif energies[i]>max(irange):
+                emax=i
+                break
+    else:
+        integrate_dos=False
+    
     if 'nums' in args:
         nums=args['nums']
     else:
@@ -40,19 +55,30 @@ def plot_dos(doscar,poscar,**args):
                 counter+=atomnums[atomtypes.index(i)]
     else:
         selected_atoms=[i for i in range(sum(atomnums))]
-        
+    
     plt.figure()
     for i in selected_atoms:
         for j in range(len(atomnums)):
             if i<sum(atomnums[:j+1]):
                 atomlabel=atomtypes[j]
                 break
-        tempy=array([0.0 for j in range(len(energies))])
-        for j in range(len(dos[i+1])):
-            tempy+=dos[i+1][j]
-        plt.plot(energies,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
+        if not integrate_dos:
+            tempy=array([0.0 for j in range(len(energies))])
+            for j in range(len(dos[i+1])):
+                tempy+=dos[i+1][j]
+            plt.plot(energies,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
+        else:
+            tempy=array([0.0 for j in range(len(erange))])
+            for j in range(len(dos[i+1])):
+                tempy+=dos[i+1][j][emin+1:emax]
+            for j in range(1,len(tempy)):
+                tempy[j]+=tempy[j-1]
+            plt.plot(erange,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
     plt.xlabel('energy - $E_f$ / eV')
-    plt.ylabel('DOS / states $eV^{-1}$')
+    if not integrate_dos:
+        plt.ylabel('DOS / states $eV^{-1}$')
+    else:
+        plt.ylabel('integrated DOS / # states')
     plt.legend()
     plt.show()
     
@@ -123,6 +149,7 @@ def parse_poscar(ifile):
         return latticevectors, coord, atomtypes, atomnums
     
 if __name__=='__main__':
+    irange=[]
     doscar='./DOSCAR'
     if exists('./CONTCAR'):
         poscar='./CONTCAR'
@@ -131,7 +158,7 @@ if __name__=='__main__':
     atomnums=[]
     atomtypes=[]
     try:
-        opts,args=getopt.getopt(sys.argv[1:],'a:t:',['atomnums=','types='])
+        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:',['atomnums=','types=','integrated='])
     except getopt.GetoptError:
         print('error in command line syntax')
         sys.exit(2)
@@ -140,4 +167,6 @@ if __name__=='__main__':
             atomnums=[int(k) for k in j.split(',')]
         if i in ['-t','--types']:
             atomtypes=[str(k) for k in j.split(',')]
-    plot_dos(doscar,poscar,nums=atomnums,types=atomtypes)
+        if i in ['-i','--integrated']:
+            irange=[float(k) for k in j.split(',')]
+    plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange)

@@ -158,7 +158,7 @@ if __name__=='__main__':
     atomnums=[]
     atomtypes=[]
     try:
-        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:',['atomnums=','types=','integrated='])
+        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:h',['atomnums=','types=','integrated=','help'])
     except getopt.GetoptError:
         print('error in command line syntax')
         sys.exit(2)
@@ -169,4 +169,15 @@ if __name__=='__main__':
             atomtypes=[str(k) for k in j.split(',')]
         if i in ['-i','--integrated']:
             irange=[float(k) for k in j.split(',')]
+        if i in ['-h','--help']:
+            print('''
+plotting options:
+-a, --atomnums          specify site projected DOS to plot by the index of atoms: 1,2,3,etc...
+-t, --types             specify which site projected DOS to plot by atom type: Au,C,etc...
+-i, --integrated        integrate the DOS between the range specified. ie -i 0,3 will plot the integrated DOS from 0 to 3 eV above the Fermi level
+
+help options:
+-h, --help               display this help message
+                  ''')
+            sys.exit()
     plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange)

@@ -180,4 +180,5 @@ help options:
 -h, --help               display this help message
                   ''')
             sys.exit()
-    plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange)
+    if exists(doscar):
+        plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange)

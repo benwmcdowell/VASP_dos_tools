@@ -8,6 +8,11 @@ def plot_dos(doscar,poscar,**args):
     dos, energies, ef = parse_doscar(doscar)
     atomtypes, atomnums = parse_poscar(poscar)[2:4]
     
+    if 'full' in args:
+        full_dos_only=True
+    else:
+        full_dos_only=False
+    
     if 'irange' in args and len(args['irange'])>0:
         integrate_dos=True
         irange=args['irange']
@@ -58,6 +63,9 @@ def plot_dos(doscar,poscar,**args):
     
     plt.figure()
     for i in selected_atoms:
+        if full_dos_only:
+            plt.plot(energies,array(dos[0][0])+array(dos[0][1]),label='total dos')
+            break
         for j in range(len(atomnums)):
             if i<sum(atomnums[:j+1]):
                 atomlabel=atomtypes[j]
@@ -157,8 +165,9 @@ if __name__=='__main__':
         poscar='./POSCAR'
     atomnums=[]
     atomtypes=[]
+    full=False
     try:
-        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:h',['atomnums=','types=','integrated=','help'])
+        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:hf',['atomnums=','types=','integrated=','help','full'])
     except getopt.GetoptError:
         print('error in command line syntax')
         sys.exit(2)
@@ -169,16 +178,19 @@ if __name__=='__main__':
             atomtypes=[str(k) for k in j.split(',')]
         if i in ['-i','--integrated']:
             irange=[float(k) for k in j.split(',')]
+        if i in ['-f','--full']:
+            full=True
         if i in ['-h','--help']:
             print('''
 plotting options:
 -a, --atomnums          specify site projected DOS to plot by the index of atoms: 1,2,3,etc...
 -t, --types             specify which site projected DOS to plot by atom type: Au,C,etc...
 -i, --integrated        integrate the DOS between the range specified. ie -i 0,3 will plot the integrated DOS from 0 to 3 eV above the Fermi level
+-f, --full              plot the total DOS instead of site projected DOS
 
 help options:
 -h, --help               display this help message
                   ''')
             sys.exit()
     if exists(doscar):
-        plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange)
+        plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange,full=full)

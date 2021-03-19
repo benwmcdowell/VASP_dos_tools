@@ -9,7 +9,7 @@ def plot_dos(doscar,poscar,**args):
     atomtypes, atomnums = parse_poscar(poscar)[2:4]
     
     if 'full' in args:
-        full_dos_only=True
+        full_dos_only=args['full']
     else:
         full_dos_only=False
     

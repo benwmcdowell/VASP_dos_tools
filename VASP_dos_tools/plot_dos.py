@@ -1,17 +1,22 @@
-from numpy import array,dot
+from numpy import array,dot,shape
 import sys
 import matplotlib.pyplot as plt
 import getopt
 from os.path import exists
 
 def plot_dos(doscar,poscar,**args):
-    dos, energies, ef = parse_doscar(doscar)
+    dos, energies, ef, orbitals = parse_doscar(doscar)
     atomtypes, atomnums = parse_poscar(poscar)[2:4]
     
     if 'full' in args:
         full_dos_only=args['full']
     else:
         full_dos_only=False
+    
+    if 'orbitals' in args and len(args['orbitals'])>0:
+        orbitals_to_plot=args['orbitals']
+    else:
+        orbitals_to_plot=orbitals
     
     if 'irange' in args and len(args['irange'])>0:
         integrate_dos=True
@@ -73,12 +78,14 @@ def plot_dos(doscar,poscar,**args):
         if not integrate_dos:
             tempy=array([0.0 for j in range(len(energies))])
             for j in range(len(dos[i+1])):
-                tempy+=dos[i+1][j]
+                if orbitals[j] in orbitals_to_plot:
+                    tempy+=dos[i+1][j]
             plt.plot(energies,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
         else:
             tempy=array([0.0 for j in range(len(erange))])
             for j in range(len(dos[i+1])):
-                tempy+=dos[i+1][j][emin+1:emax]
+                if orbitals[j] in orbitals_to_plot:
+                    tempy+=dos[i+1][j][emin+1:emax]
             for j in range(1,len(tempy)):
                 tempy[j]+=tempy[j-1]
             plt.plot(erange,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
@@ -90,6 +97,7 @@ def plot_dos(doscar,poscar,**args):
     plt.legend()
     plt.show()
     
+#reads DOSCAR
 def parse_doscar(filepath):
     with open(filepath,'r') as file:
         line=file.readline().split()
@@ -110,18 +118,26 @@ def parse_doscar(filepath):
                 if j==0:
                     temp_dos=[[] for k in range(len(line)-1)]
                 for k in range(len(line)-1):
-                    try:
-                        temp_dos[k].append(float(line[k+1]))
-                    except:
-                        temp_dos[k].append(float('e-'.join(line[k+1].split('-'))))
+                    temp_dos[k].append(float(line[k+1]))
             dos.append(temp_dos)
     energies=array(energies)-ef
+    
+    #orbitals contains the type of orbital found in each array of the site projected dos
+    num_columns=shape(dos[1:])[1]
+    if num_columns==3:
+        orbitals=['s','p','d']
+    elif num_columns==6:
+        orbitals=['s_up','s_down','p_up','p_down','d_up','d_down']
+    elif num_columns==9:
+        orbitals=['s','p_y','p_z','p_x','d_xy','d_yz','d_z2','d_xz','d_x2-y2']
+    elif num_columns==18:
+        orbitals=['s_up','s_down','p_y_up','p_y_down','p_z_up','p_z_down','p_x_up','p_x_down','d_xy_up','d_xy_down','d_yz_up','d_yz_down','d_z2_up','d_z2_down','d_xz_up','d_xz_down','d_x2-y2_up','d_x2-y2_down']
         
     #dos is formatted as [[total dos],[atomic_projected_dos for i in range(atomnum)]]
     #total dos has a shape of (4,nedos): [[spin up],[spin down],[integrated, spin up],[integrated spin down]]
     #atomic ldos have shapes of (6,nedos): [[i,j] for j in [spin up, spin down] for i in [s,p,d]]
     #energies has shape (1,nedos) and contains the energies that each dos should be plotted against
-    return dos, energies, ef
+    return dos, energies, ef, orbitals
 
 def parse_poscar(ifile):
     with open(ifile, 'r') as file:
@@ -166,8 +182,9 @@ if __name__=='__main__':
     atomnums=[]
     atomtypes=[]
     full=False
+    orbitals_to_plot=[]
     try:
-        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:hf',['atomnums=','types=','integrated=','help','full'])
+        opts,args=getopt.getopt(sys.argv[1:],'a:t:i:hfo:',['atomnums=','types=','integrated=','help','full','orbitals='])
     except getopt.GetoptError:
         print('error in command line syntax')
         sys.exit(2)
@@ -180,6 +197,8 @@ if __name__=='__main__':
             irange=[float(k) for k in j.split(',')]
         if i in ['-f','--full']:
             full=True
+        if i in ['-o','--orbitals']:
+            orbitals_to_plot=j.split(',')
         if i in ['-h','--help']:
             print('''
 plotting options:
@@ -187,10 +206,12 @@ plotting options:
 -t, --types             specify which site projected DOS to plot by atom type: Au,C,etc...
 -i, --integrated        integrate the DOS between the range specified. ie -i 0,3 will plot the integrated DOS from 0 to 3 eV above the Fermi level
 -f, --full              plot the total DOS instead of site projected DOS
+-o, --orbitals          plot only the contributions from specific orbital projections
+                        for example, to plot only s up and px down use: -o s_up,p_x_down
 
 help options:
 -h, --help               display this help message
                   ''')
             sys.exit()
     if exists(doscar):
-        plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange,full=full)
+        plot_dos(doscar,poscar,nums=atomnums,types=atomtypes,irange=irange,full=full,orbitals=orbitals_to_plot)

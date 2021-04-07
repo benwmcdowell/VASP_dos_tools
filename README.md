@@ -7,3 +7,4 @@ Included files:
                       -a, --atomnums: plot the site projected DOS for the atoms at specified indices (ie. 0,4,355)
                       -t, --types: plot the site projected DOS for atoms of specified types (ie. Ag, C)
                       -i, --integrated: plot the integrated DOS instead, integrated between specified energies relative to Ef (ie 0,3 integrates from the Fermi level to 3 eV above the Fermi level)
+                Compatible with LORBIT = 10,11 and ISPIN = 1,2

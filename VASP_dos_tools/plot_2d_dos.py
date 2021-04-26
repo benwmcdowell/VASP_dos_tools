@@ -37,7 +37,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
         types=[]
     
     start=[0,0]
-    end=[len(i) for i in [energies]]
+    end=[len(i) for i in energies]
     if 'energy_range' in args:
         for i in range(2):
             for j in range(len(energies[i])):
@@ -54,7 +54,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             for i in atomtypes[k]:
                 if i in types:
                     for j in range(atomnums[k][atomtypes[k].index(i)]):
-                        if counter in nums:
+                        if j+1 in nums:
                             selected_atoms[k].append(counter)
                         counter+=1
                 else:

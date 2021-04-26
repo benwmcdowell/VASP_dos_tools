@@ -1,4 +1,4 @@
-from numpy import array,dot,shape,zeros,outer
+from numpy import array,dot,shape,zeros,outer,meshgrid
 import sys
 import matplotlib.pyplot as plt
 import getopt
@@ -30,10 +30,22 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
         nums=args['nums']
     else:
         nums=[]
+        
     if 'types' in args:
         types=args['types']
     else:
         types=[]
+    
+    start=[0,0]
+    end=[len(i) for i in [energies]]
+    if 'energy_range' in args:
+        for i in range(2):
+            for j in range(len(energies[i])):
+                if energies[i][j]<args['energy_range'][0]:
+                    start[i]=j
+                if energies[i][j]>args['energy_range'][1]:
+                    end[i]=j
+                    break
         
     selected_atoms=[[],[]]
     for k in range(2):
@@ -68,8 +80,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             if i<sum(atomnums[0][:k+1]):
                 atomlabel=atomtypes[0][k]
                 break
-        tempx=array([j for j in energies[0]])
-        tempy=array([j for j in energies[1]])
+        tempx,tempy=meshgrid(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]])
         proj_dos=zeros((len(energies[0]),len(energies[1])))
         for k in range(len(orbitals[0])): 
             if orbitals[0][k] in orbitals_to_plot:
@@ -178,10 +189,6 @@ if __name__=='__main__':
             atomnums=[int(k) for k in j.split(',')]
         if i in ['-t','--types']:
             atomtypes=[str(k) for k in j.split(',')]
-        if i in ['-i','--integrated']:
-            irange=[float(k) for k in j.split(',')]
-        if i in ['-f','--full']:
-            full=True
         if i in ['-o','--orbitals']:
             orbitals_to_plot=j.split(',')
         if i in ['-h','--help']:
@@ -189,8 +196,6 @@ if __name__=='__main__':
 plotting options:
 -a, --atomnums          specify site projected DOS to plot by the index of atoms: 1,2,3,etc...
 -t, --types             specify which site projected DOS to plot by atom type: Au,C,etc...
--i, --integrated        integrate the DOS between the range specified. ie -i 0,3 will plot the integrated DOS from 0 to 3 eV above the Fermi level
--f, --full              plot the total DOS instead of site projected DOS
 -o, --orbitals          plot only the contributions from specific orbital projections
                         for example, to plot only s up and px down use: -o s_up,p_x_down
 

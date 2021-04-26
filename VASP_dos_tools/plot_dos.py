@@ -47,7 +47,7 @@ def plot_dos(doscar,poscar,**args):
         for i in atomtypes:
             if i in types:
                 for j in range(atomnums[atomtypes.index(i)]):
-                    if counter in nums:
+                    if j+1 in nums:
                         selected_atoms.append(counter)
                     counter+=1
             else:
@@ -55,7 +55,7 @@ def plot_dos(doscar,poscar,**args):
     elif len(nums)>0:
         selected_atoms=nums
     elif len(types)>0:
-        counter=0
+        counter=1
         for i in atomtypes:
             if i in types:
                 for j in range(atomnums[atomtypes.index(i)]):
@@ -79,13 +79,13 @@ def plot_dos(doscar,poscar,**args):
             tempy=array([0.0 for j in range(len(energies))])
             for j in range(len(dos[i+1])):
                 if orbitals[j] in orbitals_to_plot:
-                    tempy+=dos[i+1][j]
+                    tempy+=dos[i][j]
             plt.plot(energies,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
         else:
             tempy=array([0.0 for j in range(len(erange))])
             for j in range(len(dos[i+1])):
                 if orbitals[j] in orbitals_to_plot:
-                    tempy+=dos[i+1][j][emin+1:emax]
+                    tempy+=dos[i][j][emin+1:emax]
             for j in range(1,len(tempy)):
                 tempy[j]+=tempy[j-1]
             plt.plot(erange,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))

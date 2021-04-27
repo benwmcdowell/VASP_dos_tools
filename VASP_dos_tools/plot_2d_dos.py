@@ -35,6 +35,11 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
         types=args['types']
     else:
         types=[]
+        
+    if 'average' in args:
+        average_dos=True
+    else:
+        average_dos=False
     
     start=[0,0]
     end=[len(i) for i in energies]
@@ -76,13 +81,17 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
     #plots the 2d dos spectra as individual figures
     tempx=array([energies[0][start[0]:end[0]] for i in range(end[1]-start[1])])
     tempy=array([energies[1][start[1]:end[1]] for i in range(end[0]-start[0])]).transpose()
-    for i,j in zip(selected_atoms[0],selected_atoms[1]):
+    if average_dos:
         plt.figure()
+        proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
+    for i,j in zip(selected_atoms[0],selected_atoms[1]):
+        if not average_dos:
+            plt.figure()
+            proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
         for k in range(len(atomnums[0])):
             if i-1<sum(atomnums[0][:k+1]):
                 atomlabel=atomtypes[0][k]
                 break
-        proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
         for k in range(len(orbitals[0])):
             for l in orbitals_to_plot:
                 if l in orbitals[0][k]:
@@ -94,7 +103,20 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
                 if l in k:
                     contributing_orbitals.append(k)
                     break
-        plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
+        if len(contributing_orbitals)==len(orbitals[0]):
+            contributing_orbitals=['all']
+        if not average_dos:
+            plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
+            plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+            plt.plot(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]],color='red',linestyle='dashed')
+            plt.xlabel('energy - $E_f$ / eV')
+            plt.ylabel('energy - $E_f$ / eV')
+            cbar=plt.colorbar()
+            cbar.set_label('$states^{2}eV^{-2}$')
+            plt.show()
+            
+    if average_dos:
+        plt.title('averaged over: {}\n contrbuting orbitals: {}'.format(', '.join(['{} #{}'.format(i,j) for i,j in zip(types,nums)]),', '.join(contributing_orbitals)))
         plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
         plt.plot(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]],color='red',linestyle='dashed')
         plt.xlabel('energy - $E_f$ / eV')

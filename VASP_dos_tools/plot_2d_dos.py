@@ -1,4 +1,4 @@
-from numpy import array,dot,shape,zeros,outer,meshgrid
+from numpy import array,dot,shape,zeros,outer
 import sys
 import matplotlib.pyplot as plt
 import getopt
@@ -74,17 +74,18 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             selected_atoms[k]=[i for i in range(sum(atomnums))]
     
     #plots the 2d dos spectra as individual figures
+    tempx=array([energies[0][start[0]:end[0]] for i in range(end[1]-start[1])])
+    tempy=array([energies[1][start[1]:end[1]] for i in range(end[0]-start[0])]).transpose()
     for i,j in zip(selected_atoms[0],selected_atoms[1]):
         plt.figure()
         for k in range(len(atomnums[0])):
-            if i<sum(atomnums[0][:k+1]):
+            if i-1<sum(atomnums[0][:k+1]):
                 atomlabel=atomtypes[0][k]
                 break
-        tempx,tempy=meshgrid(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]])
-        proj_dos=zeros((len(energies[0]),len(energies[1])))
+        proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
         for k in range(len(orbitals[0])): 
             if orbitals[0][k] in orbitals_to_plot:
-                proj_dos+=outer(dos[0][i][k],dos[1][j][k])
+                proj_dos+=outer(dos[1][j][k][start[1]:end[1]],dos[0][i][k][start[0]:end[0]])
         plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(orbitals_to_plot)))
         plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
         plt.xlabel('energy - $E_f$ / eV')

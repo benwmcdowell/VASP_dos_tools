@@ -72,18 +72,18 @@ def plot_dos(doscar,poscar,**args):
             plt.plot(energies,array(dos[0][0])+array(dos[0][1]),label='total dos')
             break
         for j in range(len(atomnums)):
-            if i<sum(atomnums[:j+1]):
+            if i-1<sum(atomnums[:j+1]):
                 atomlabel=atomtypes[j]
                 break
         if not integrate_dos:
             tempy=array([0.0 for j in range(len(energies))])
-            for j in range(len(dos[i+1])):
+            for j in range(len(dos[i])):
                 if orbitals[j] in orbitals_to_plot:
                     tempy+=dos[i][j]
             plt.plot(energies,tempy,label='{} #{}'.format(atomlabel,i-sum(atomnums[:atomtypes.index(atomlabel)])))
         else:
             tempy=array([0.0 for j in range(len(erange))])
-            for j in range(len(dos[i+1])):
+            for j in range(len(dos[i])):
                 if orbitals[j] in orbitals_to_plot:
                     tempy+=dos[i][j][emin+1:emax]
             for j in range(1,len(tempy)):

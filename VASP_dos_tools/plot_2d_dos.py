@@ -88,8 +88,15 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
                 if l in orbitals[0][k]:
                     proj_dos+=outer(dos[1][j][k][start[1]:end[1]],dos[0][i][k][start[0]:end[0]])
                     break
-        plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(orbitals_to_plot)))
+        contributing_orbitals=[]
+        for k in orbitals[0]:
+            for l in orbitals_to_plot:
+                if l in k:
+                    contributing_orbitals.append(k)
+                    break
+        plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
         plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+        plt.plot(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]],color='red',linestyle='dashed')
         plt.xlabel('energy - $E_f$ / eV')
         plt.ylabel('energy - $E_f$ / eV')
         cbar=plt.colorbar()

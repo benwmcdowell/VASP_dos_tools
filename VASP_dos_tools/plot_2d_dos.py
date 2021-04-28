@@ -25,6 +25,14 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
         orbitals_to_plot=args['orbitals']
     else:
         orbitals_to_plot=orbitals[0]
+    contributing_orbitals=[]
+    for k in orbitals[0]:
+        for l in orbitals_to_plot:
+            if l in k:
+                contributing_orbitals.append(k)
+                break
+    if len(contributing_orbitals)==len(orbitals[0]):
+        contributing_orbitals=['all']
     
     if 'nums' in args:
         nums=args['nums']
@@ -40,7 +48,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
         average_dos=True
     else:
         average_dos=False
-    
+        
     start=[0,0]
     end=[len(i) for i in energies]
     if 'energy_range' in args:
@@ -82,12 +90,18 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
     tempx=array([energies[0][start[0]:end[0]] for i in range(end[1]-start[1])])
     tempy=array([energies[1][start[1]:end[1]] for i in range(end[0]-start[0])]).transpose()
     if average_dos:
-        plt.figure()
-        proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
+            fig,axs=plt.subplots(2,2,sharex='col',sharey='row',gridspec_kw={'width_ratios': [4,1], 'height_ratios': [4,1]})
+            fig.delaxes(axs[1,1])
+            proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
+            temp_dosx=zeros((3,end[0]-start[0]))
+            temp_dosy=zeros((3,end[1]-start[1]))
     for i,j in zip(selected_atoms[0],selected_atoms[1]):
         if not average_dos:
-            plt.figure()
+            fig,axs=plt.subplots(2,2,sharex='col',sharey='row',gridspec_kw={'width_ratios': [4,1], 'height_ratios': [4,1]})
+            fig.delaxes(axs[1,1])
             proj_dos=zeros((end[1]-start[1],end[0]-start[0]))
+            temp_dosx=zeros((3,end[0]-start[0]))
+            temp_dosy=zeros((3,end[1]-start[1]))
         for k in range(len(atomnums[0])):
             if i-1<sum(atomnums[0][:k+1]):
                 atomlabel=atomtypes[0][k]
@@ -96,34 +110,63 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             for l in orbitals_to_plot:
                 if l in orbitals[0][k]:
                     proj_dos+=outer(dos[1][j][k][start[1]:end[1]],dos[0][i][k][start[0]:end[0]])
+                    if k<2:
+                        m=0
+                    if k>1 and k<5:
+                        m=1
+                    if k>4:
+                        m=2
+                    temp_dosx[m]+=dos[0][i][k][start[0]:end[0]]
+                    temp_dosy[m]+=dos[1][j][k][start[1]:end[1]]
                     break
-        contributing_orbitals=[]
-        for k in orbitals[0]:
-            for l in orbitals_to_plot:
-                if l in k:
-                    contributing_orbitals.append(k)
-                    break
-        if len(contributing_orbitals)==len(orbitals[0]):
-            contributing_orbitals=['all']
+                
         if not average_dos:
-            plt.title('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
-            plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
-            plt.plot(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]],color='red',linestyle='dashed')
-            plt.xlabel('energy - $E_f$ / eV')
-            plt.ylabel('energy - $E_f$ / eV')
-            cbar=plt.colorbar()
-            cbar.set_label('$states^{2}eV^{-2}$')
-            plt.show()
+            fig.suptitle('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
+            dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+            axs[0,0].plot([energies[0][start[0]:end[0]][k] for k in [0,-1]],[energies[1][start[1]:end[1]][k] for k in [0,-1]],color='red',linestyle='dashed')
+            axs[0,1].set_ylabel('energy - $E_f$ / eV')
+            axs[1,0].set_xlabel('energy - $E_f$ / eV')
+            for k,l in zip(range(3),['s','p','d']):
+                axs[0,1].plot(temp_dosy[k],energies[1][start[1]:end[1]],label=l)
+                axs[1,0].plot(energies[0][start[0]:end[0]],temp_dosx[k],label=l)
+            axs[0,1].set_xlim(axs[0,1].get_xlim()[1],axs[0,1].get_xlim()[0])
+            axs[1,0].set_yticklabels([])
+            axs[0,1].set_xticklabels([])
+            axs[0,1].yaxis.set_label_position('right')
+            axs[0,0].yaxis.tick_right()
+            axs[0,1].yaxis.tick_right()
+            axs[0,1].tick_params(axis='x', which='both', top=False, bottom=False)
+            axs[1,0].tick_params(axis='y', which='both', top=False, bottom=False)
+            axs[0,1].tick_params(labelright=True)
+            axs[0,0].tick_params(labelright=False)
+            handles, labels = axs[1,0].get_legend_handles_labels()
+            fig.legend(handles, labels, loc='lower right')
+            fig.tight_layout()
+            fig.canvas.draw()
             
     if average_dos:
-        plt.title('averaged over: {}\n contrbuting orbitals: {}'.format(', '.join(['{} #{}'.format(i,j) for i,j in zip(types,nums)]),', '.join(contributing_orbitals)))
-        plt.pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
-        plt.plot(energies[0][start[0]:end[0]],energies[1][start[1]:end[1]],color='red',linestyle='dashed')
-        plt.xlabel('energy - $E_f$ / eV')
-        plt.ylabel('energy - $E_f$ / eV')
-        cbar=plt.colorbar()
-        cbar.set_label('$states^{2}eV^{-2}$')
-        plt.show()
+        fig.suptitle('averaged over: {}\n contrbuting orbitals: {}'.format(', '.join(['{} #{}'.format(i,j) for i,j in zip(types,nums)]),', '.join(contributing_orbitals)))
+        dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+        axs[0,0].plot([energies[0][start[0]:end[0]][k] for k in [0,-1]],[energies[1][start[1]:end[1]][k] for k in [0,-1]],color='red',linestyle='dashed')
+        axs[0,1].set_ylabel('energy - $E_f$ / eV')
+        axs[1,0].set_xlabel('energy - $E_f$ / eV')
+        for k,l in zip(range(3),['s','p','d']):
+            axs[0,1].plot(temp_dosy[k],energies[1][start[1]:end[1]],label=l)
+            axs[1,0].plot(energies[0][start[0]:end[0]],temp_dosx[k],label=l)
+        axs[0,1].set_xlim(axs[0,1].get_xlim()[1],axs[0,1].get_xlim()[0])
+        axs[1,0].set_yticklabels([])
+        axs[0,1].set_xticklabels([])
+        axs[0,1].yaxis.set_label_position('right')
+        axs[0,0].yaxis.tick_right()
+        axs[0,1].yaxis.tick_right()
+        axs[0,1].tick_params(axis='x', which='both', top=False, bottom=False)
+        axs[1,0].tick_params(axis='y', which='both', top=False, bottom=False)
+        axs[0,1].tick_params(labelright=True)
+        axs[0,0].tick_params(labelright=False)
+        handles, labels = axs[1,0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc='lower right')
+        fig.tight_layout()
+        fig.canvas.draw()
     
 #reads DOSCAR
 def parse_doscar(filepath):

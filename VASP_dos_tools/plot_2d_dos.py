@@ -112,9 +112,9 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
                     proj_dos+=outer(dos[1][j][k][start[1]:end[1]],dos[0][i][k][start[0]:end[0]])
                     if k<2:
                         m=0
-                    if k>1 and k<5:
+                    if k>1 and k<8:
                         m=1
-                    if k>4:
+                    if k>7:
                         m=2
                     temp_dosx[m]+=dos[0][i][k][start[0]:end[0]]
                     temp_dosy[m]+=dos[1][j][k][start[1]:end[1]]
@@ -140,7 +140,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             axs[0,1].tick_params(labelright=True)
             axs[0,0].tick_params(labelright=False)
             handles, labels = axs[1,0].get_legend_handles_labels()
-            fig.legend(handles, labels, loc='lower right')
+            fig.legend(handles, labels, bbox_to_anchor=(0.8,0.15), loc='lower right')
             fig.tight_layout()
             fig.canvas.draw()
             

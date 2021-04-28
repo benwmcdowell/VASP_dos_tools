@@ -49,10 +49,18 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
     else:
         average_dos=False
         
+    if 'cmap' in args:
+        cmap=args['cmap']
+    else:
+        cmap='jet'
+        
     start=[0,0]
     end=[len(i) for i in energies]
     if 'energy_range' in args:
         for i in range(2):
+            if min(energies[i])>args['energy_range'][0] or max(energies[i])<args['energy_range'][1]:
+                print('min or max of energy range exceeds bounds of doscar{}'.format(i))
+                sys.exit()
             for j in range(len(energies[i])):
                 if energies[i][j]<args['energy_range'][0]:
                     start[i]=j
@@ -122,7 +130,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
                 
         if not average_dos:
             fig.suptitle('{} | contrbuting orbitals: {}'.format('{} #{}'.format(atomlabel,i-sum(atomnums[0][:atomtypes[0].index(atomlabel)])),', '.join(contributing_orbitals)))
-            dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+            dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap=cmap)
             axs[0,0].plot([energies[0][start[0]:end[0]][k] for k in [0,-1]],[energies[1][start[1]:end[1]][k] for k in [0,-1]],color='red',linestyle='dashed')
             axs[0,1].set_ylabel('energy - $E_f$ / eV')
             axs[1,0].set_xlabel('energy - $E_f$ / eV')
@@ -146,7 +154,7 @@ def plot_2d_dos(doscar1,doscar2,poscar1,poscar2,**args):
             
     if average_dos:
         fig.suptitle('averaged over: {}\n contrbuting orbitals: {}'.format(', '.join(['{} #{}'.format(i,j) for i,j in zip(types,nums)]),', '.join(contributing_orbitals)))
-        dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap='jet')
+        dos2d=axs[0,0].pcolormesh(tempx,tempy,proj_dos,shading='nearest',cmap=cmap)
         axs[0,0].plot([energies[0][start[0]:end[0]][k] for k in [0,-1]],[energies[1][start[1]:end[1]][k] for k in [0,-1]],color='red',linestyle='dashed')
         axs[0,1].set_ylabel('energy - $E_f$ / eV')
         axs[1,0].set_xlabel('energy - $E_f$ / eV')

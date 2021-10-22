@@ -2,18 +2,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-def parse_procar(ifile):
+def parse_procar(ifile,**args):
+    if 'kpoints' in args:
+        kpts=args['kpts']
+    else:
+        kpts=0
     with open(ifile) as file:
         for i in range(2):
             line=file.readline().split()
         nkpts=int(line[3])
+        if kpts==0:
+            kpts=[i for i in range(nkpts)]
         nbands=int(line[7])
         nions=int(line[11])
         eigenval=np.zeros((nkpts*nbands))
         total_weight=np.zeros((nkpts*nbands,nions))
+        k_weights=np.zeros((nkpts*nbands))
         for i in range(nkpts):
             for j in range(2):
                 line=file.readline()
+            if i in kpts:
+                for j in range(nbands):
+                    k_weights[i*nbands+j]=float(line.split()[-1])
             for j in range(nbands):
                 for k in range(2):
                     line=file.readline()
@@ -27,7 +37,7 @@ def parse_procar(ifile):
                 total_weight[i*nbands+j,:]/=float(line[-1])
             file.readline()
                 
-    return eigenval,total_weight
+    return eigenval,total_weight,k_weights
 
 #cutoff is the minimum total weight for which specific eigenstates are selected
 def plot_atom_eigenval(atoms_to_plot,cutoff,procar,poscar,doscar):
@@ -41,16 +51,20 @@ def plot_atom_eigenval(atoms_to_plot,cutoff,procar,poscar,doscar):
         if atoms[i] in atoms_to_plot:
             atom_filter[i]+=1.0
     ef=parse_doscar(doscar)
-    total_eigenval,weights=parse_procar(procar)
+    total_eigenval,weights,total_kweights=parse_procar(procar)
     total_eigenval-=ef
     eigenval=[]
+    kweights=[]
     for i in range(len(total_eigenval)):
         if sum(atom_filter*weights[i])>cutoff:
             eigenval.append(total_eigenval[i])
+            kweights.append(total_kweights[i])
             
     eigenval=np.array(eigenval)
+    kweights=np.array(kweights)
+    kweights/=sum(kweights)
     
-    return eigenval
+    return eigenval,kweights
     
 #reads DOSCAR
 def parse_doscar(filepath):

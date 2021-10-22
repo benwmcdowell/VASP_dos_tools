@@ -17,11 +17,7 @@ def parse_procar(ifile):
             for j in range(nbands):
                 for k in range(2):
                     line=file.readline()
-                try:
-                    eigenval[i*nbands+j]=float(line.split()[4])
-                except:
-                    print(i,j,k,line)
-                    sys.exit()
+                eigenval[i*nbands+j]=float(line.split()[4])
                 for k in range(2):
                     line=file.readline()
                 for k in range(nions):
@@ -35,7 +31,7 @@ def parse_procar(ifile):
 
 #cutoff is the minimum total weight for which specific eigenstates are selected
 def plot_atom_eigenval(atoms_to_plot,cutoff,procar,poscar,doscar):
-    atomtypes,atomnums=parse_poscar(poscar)[2:3]
+    atomtypes,atomnums=parse_poscar(poscar)[2:4]
     atoms=[]
     for i in range(len(atomnums)):
         for j in range(atomnums[i]):
@@ -51,8 +47,10 @@ def plot_atom_eigenval(atoms_to_plot,cutoff,procar,poscar,doscar):
     for i in range(len(total_eigenval)):
         if sum(atom_filter*weights[i])>cutoff:
             eigenval.append(total_eigenval[i])
+            
+    eigenval=np.array(eigenval)
     
-    return np.array(eigenval)
+    return eigenval
     
 #reads DOSCAR
 def parse_doscar(filepath):

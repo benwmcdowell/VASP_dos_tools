@@ -46,3 +46,4 @@ def parse_doscar(filepath):
             line=file.readline().split()
         ef=float(line[3])
     return ef
+

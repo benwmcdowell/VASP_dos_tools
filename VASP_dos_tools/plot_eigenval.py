@@ -6,12 +6,14 @@ def parse_eigenval(ifile):
     with open(ifile) as file:
         for i in range(6):
             line=file.readline().split()
-        kpts=int(line[1])
+        nkpts=int(line[1])
         nstates=int(line[2])
-        eigenval=np.zeros((nstates*kpts))
-        for j in range(kpts):
+        eigenval=np.zeros((nstates*nkpts))
+        kpts=np.zeros((nstates*nkpts,3))
+        for j in range(nkpts):
             for i in range(2):
-                file.readline()
+                line=file.readline()
+            kpts[i+j*nstates]=np.array([float(k) for k in line.split[:3]])
             for i in range(nstates):
                 line=file.readline().split()
                 if len(line)==5:
@@ -20,7 +22,7 @@ def parse_eigenval(ifile):
                 elif len(line)==3:
                     eigenval[i+j*nstates]+=float(line[1])
         
-    return eigenval,nstates
+    return eigenval,nstates,kpts
 
 def plot_eigenval(ifile,**args):
     if 'nbins' in args:
@@ -28,7 +30,7 @@ def plot_eigenval(ifile,**args):
     else:
         nbins=1000
         
-    eigenval,nstates=parse_eigenval(ifile)
+    eigenval,nstates=parse_eigenval(ifile)[:2]
         
     if 'doscar' in args:
         ef=parse_doscar(args['doscar'])

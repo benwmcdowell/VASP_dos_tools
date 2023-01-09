@@ -49,7 +49,7 @@ def plot_dispersion(ifile,kvec):
             e.append(j)
             k.append(np.dot(i,kvec)/np.linalg.norm(kvec))
     plt.figure()
-    plt.plot(k,e)
+    plt.scatter(k,e)
     plt.show()
     
 #reads DOSCAR

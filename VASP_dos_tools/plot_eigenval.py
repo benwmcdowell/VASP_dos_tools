@@ -40,6 +40,18 @@ def plot_eigenval(ifile,**args):
     axs.hist(eigenval,bins=nbins)
     fig.show()
     
+def plot_dispersion(ifile,kvec):
+    eigenval,nstates,kpts=parse_eigenval(ifile)
+    e=[]
+    k=[]
+    for i,j in zip(kpts,eigenval):
+        if np.dot(i,kvec)/np.linalg.norm(i)/np.linalg.norm(kvec)==1:
+            e.append(j)
+            k.append(np.dot(i,kvec)/np.linalg.norm(kvec))
+    plt.figure()
+    plt.plot(k,e)
+    plt.show()
+    
 #reads DOSCAR
 def parse_doscar(filepath):
     with open(filepath,'r') as file:

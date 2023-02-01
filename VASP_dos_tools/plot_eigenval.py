@@ -13,7 +13,7 @@ def parse_eigenval(ifile):
         for j in range(nkpts):
             for i in range(2):
                 line=file.readline()
-            kpts[i+j*nstates]=np.array([float(k) for k in line.split[:3]])
+            kpts[i+j*nstates]=np.array([float(k) for k in line.split()[:3]])
             for i in range(nstates):
                 line=file.readline().split()
                 if len(line)==5:

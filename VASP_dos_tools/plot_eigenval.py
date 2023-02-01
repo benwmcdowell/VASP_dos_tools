@@ -51,7 +51,7 @@ def plot_dispersion(fpath,kvec):
     eigenval-=ef
     
     e=np.zeros((nstates,int(len(kpts)/nstates)))
-    k=np.zeros((np.shape(e)[1],3))
+    k=np.zeros((np.shape(e)[1]))
     for i in range(nstates):
         for j in range(np.shape(e)[1]):
             if i==0:
